@@ -1,9 +1,10 @@
 ﻿#include <chrono>
 #include <iostream>
 #include <algorithm>
-int SIZE = 2000;
+int SIZE = 1200;
 
-void clear_martix(double**& c)
+
+void clear_martix(int**& c)
 {
     for (int i = 0; i < SIZE; i++)
     {
@@ -13,7 +14,7 @@ void clear_martix(double**& c)
         }
     }
 }
-void sequential_multiplication(double**& c, double**& a, double**& b)
+void sequential_multiplication(int**& c, int**& a, int**& b)
 {
     clear_martix(std::ref(c));
     auto m_StartTime = std::chrono::system_clock::now();
@@ -28,7 +29,7 @@ void sequential_multiplication(double**& c, double**& a, double**& b)
         }
     }
     auto m_EndTime = std::chrono::system_clock::now();
-    std::cout << "sequential ijk " << std::chrono::duration_cast<std::chrono::milliseconds>(m_EndTime - m_StartTime).count() << " ms\n";
+    std::cout << "sequential ijk " << std::chrono::duration_cast<std::chrono::milliseconds>(m_EndTime - m_StartTime).count() << " ms \n";
 
     clear_martix(std::ref(c));
     m_StartTime = std::chrono::system_clock::now();
@@ -106,39 +107,58 @@ void sequential_multiplication(double**& c, double**& a, double**& b)
     std::cout << "sequential kij " << std::chrono::duration_cast<std::chrono::milliseconds>(m_EndTime - m_StartTime).count() << " ms\n";
     clear_martix(std::ref(c));
 }
-
-
+void parallel_multiplication(int**& c, int**& a, int**& b)
+{
+    clear_martix(std::ref(c));
+    auto m_StartTime = std::chrono::system_clock::now();
+    #pragma omp parallel for
+    for (int i = 0; i < SIZE; i++)
+    {
+        for (int j = 0; j < SIZE; j++)
+        {
+            for (int k = 0; k < SIZE; k++)
+            {
+                c[i][j] += a[i][k] * b[k][j];   
+            }
+        }
+    }
+    auto m_EndTime = std::chrono::system_clock::now();
+    std::cout << "parallel " << std::chrono::duration_cast<std::chrono::milliseconds>(m_EndTime - m_StartTime).count() << " ms\n";
+    clear_martix(std::ref(c));
+}
 
 
 int main()
 {
-    double** a, ** b, ** c;
-    a = new double* [SIZE];
+    srand(time(NULL));
+    int** a, ** b, ** c;
+    a = new int* [SIZE];
     for (int i = 0; i < SIZE; i++) 
     {
-        a[i] = new double[SIZE];
+        a[i] = new int[SIZE];
         for (int j = 0; j < SIZE; j++) 
         {
             a[i][j] = rand();
         }
     }
-    b = new double* [SIZE];
+    b = new int* [SIZE];
     for (int i = 0; i < SIZE; i++)
     {
-        b[i] = new double[SIZE];
+        b[i] = new int[SIZE];
         for (int j = 0; j < SIZE; j++)
         {
             b[i][j] = rand();
         }
     }
-    c = new double* [SIZE];
+    c = new int* [SIZE];
     for (int i = 0; i < SIZE; i++)
     {
-        c[i] = new double[SIZE];
+        c[i] = new int[SIZE];
         for (int j = 0; j < SIZE; j++)
         {
             c[i][j] = 0;
         }
     }
     sequential_multiplication(std::ref(c), std::ref(a), std::ref(b));
+    parallel_multiplication(std::ref(c), std::ref(a), std::ref(b));
 }
